@@ -15,6 +15,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.SpotifyAccessTokenExpiresAtKey
 import echo.music.iad1tya.constants.SpotifyAccessTokenKey
+import echo.music.iad1tya.constants.SpotifyLikedSongsLastSyncKey
 import echo.music.iad1tya.constants.SpotifyAccountAvatarUrlKey
 import echo.music.iad1tya.constants.SpotifyAccountNameKey
 import echo.music.iad1tya.constants.SpotifySpDcKey
@@ -121,6 +122,15 @@ constructor(
       )
     }
 
+  suspend fun lastLikedSongsSyncAt(): Long? =
+    context.dataStore.data.first()[SpotifyLikedSongsLastSyncKey]
+
+  private suspend fun recordLikedSongsSync() {
+    context.dataStore.edit { prefs ->
+      prefs[SpotifyLikedSongsLastSyncKey] = System.currentTimeMillis()
+    }
+  }
+
   suspend fun logout() {
     withContext(Dispatchers.IO) {
       context.dataStore.edit { prefs ->
@@ -207,6 +217,7 @@ constructor(
         val tracks = fetchAllTracks(source)
         if (tracks.isEmpty()) {
           mirrorPlaylist(source, emptyList())
+          if (source is SpotifyImportSource.LikedSongs) recordLikedSongsSync()
           summaries +=
             SpotifyImportSourceSummaryUi(
               title = source.title,
@@ -237,6 +248,7 @@ constructor(
           )
 
         mirrorPlaylist(source, matched.map { it.metadata })
+        if (source is SpotifyImportSource.LikedSongs) recordLikedSongsSync()
         summaries +=
           SpotifyImportSourceSummaryUi(
             title = source.title,
@@ -319,6 +331,7 @@ constructor(
       }
 
       mirrorPlaylist(source, finalTracks)
+      if (source is SpotifyImportSource.LikedSongs) recordLikedSongsSync()
     }
 
   private suspend fun ensureAuthenticated() {
