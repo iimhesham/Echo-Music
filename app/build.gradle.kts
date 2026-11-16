@@ -33,7 +33,7 @@ android {
     applicationId = "echo.music.iad1tya"
     minSdk = 26
     targetSdk = 36
-    versionCode = 167
+    versionCode = (project.findProperty("appVersionCode") as String?)?.toIntOrNull() ?: 167
     versionName = "1.4.6"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

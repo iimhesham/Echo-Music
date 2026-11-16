@@ -15,13 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Add Spotify Liked Songs import (files + 2 small edits)
-        run: |
-          set -e
-          # (keep existing long script that adds the import files and patches NavigationBuilder + AccountSettings)
-          # For brevity in this fix we assume the previous version is already good; if needed re-paste.
-          echo "Spotify import files already present or will be applied by previous steps if needed"
-
       - uses: actions/setup-java@v4
         with:
           java-version: '21'
@@ -43,7 +36,7 @@ jobs:
       - name: Build debug APK
         run: |
           chmod +x gradlew
-          ./gradlew assembleUniversalGmsDebug --stacktrace 2>&1 | tee build.log
+          ./gradlew assembleUniversalGmsDebug -PappVersionCode=$((200 + GITHUB_RUN_NUMBER)) --stacktrace 2>&1 | tee build.log
           exit ${PIPESTATUS[0]}
 
       - name: Find and list APKs
@@ -64,6 +57,28 @@ jobs:
             build.log
           if-no-files-found: error
 
+      - name: Inspect APK (package, version, signature)
+        if: always()
+        run: |
+          APK=app/build/outputs/apk/universalGms/debug/app-universal-gms-debug.apk
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          {
+            ls -l "$APK"
+            $BT/aapt2 dump badging "$APK" | grep -E "^package:|^application-label:|^sdkVersion|^targetSdkVersion"
+            $BT/apksigner verify --verbose --print-certs "$APK" | head -8
+          } > /tmp/apk-info.txt 2>&1 || true
+          cat /tmp/apk-info.txt
+
+      - name: Publish APK as a GitHub Release
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="sandia-${{ github.run_number }}"
+          cp app/build/outputs/apk/universalGms/debug/app-universal-gms-debug.apk "Sandia-$TAG.apk"
+          gh release create "$TAG" "Sandia-$TAG.apk" --repo "${{ github.repository }}" --target "${{ github.sha }}" \
+            --title "Sandia build ${{ github.run_number }}" --notes "Debug build of commit ${{ github.sha }}"
+
       - name: Save build log summary to a branch
         if: always()
         run: |
@@ -76,6 +91,7 @@ jobs:
           find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} + 2>/dev/null || true
           cp /tmp/errors.txt errors.txt 2>/dev/null || true
           cp /tmp/tail.txt tail.txt 2>/dev/null || true
-          git add errors.txt tail.txt 2>/dev/null || true
+          cp /tmp/apk-info.txt apk-info.txt 2>/dev/null || true
+          git add errors.txt tail.txt apk-info.txt 2>/dev/null || true
           git commit -qm "build log" || true
           git push -f origin buildlog || true
