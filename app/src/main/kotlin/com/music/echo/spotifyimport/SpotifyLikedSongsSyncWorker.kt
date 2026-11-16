@@ -69,6 +69,10 @@ class SpotifyLikedSongsSyncWorker(
   companion object {
     private const val WORK_NAME = "SpotifyLikedSongsPeriodicSync"
 
+    fun cancel(context: Context) {
+      WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
+    }
+
     fun schedule(context: Context) {
       val request =
         PeriodicWorkRequestBuilder<SpotifyLikedSongsSyncWorker>(12, TimeUnit.HOURS)
