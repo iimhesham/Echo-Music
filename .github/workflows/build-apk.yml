@@ -3,6 +3,9 @@ name: Build my APK
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -318,6 +321,21 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleUniversalGmsDebug --stacktrace 2>&1 | tee build.log
           exit ${PIPESTATUS[0]}
+
+      - name: Save build log summary to a branch
+        if: always()
+        run: |
+          cp build.log /tmp/build.log || true
+          grep -E "^e: |^w: .*error|FAILED|What went wrong|Execution failed" -A4 /tmp/build.log | head -150 > /tmp/errors.txt || true
+          tail -n 120 /tmp/build.log > /tmp/tail.txt || true
+          git config user.name "build-bot"; git config user.email "bot@users.noreply.github.com"
+          git checkout -q --orphan buildlog
+          git rm -rq --cached . || true
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp /tmp/errors.txt errors.txt; cp /tmp/tail.txt tail.txt
+          git add errors.txt tail.txt
+          git commit -qm "build log" || true
+          git push -f origin buildlog || true
 
       - uses: actions/upload-artifact@v4
         if: always()
