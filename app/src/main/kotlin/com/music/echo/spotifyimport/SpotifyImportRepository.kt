@@ -308,6 +308,16 @@ constructor(
       }
 
       timber.log.Timber.d("SyncPlaylist: Final tracks count: ${finalTracks.size}")
+
+      // Never replace a previously imported playlist with an incomplete match.
+      // A temporary YouTube search failure must not silently remove songs from
+      // the user's local library. Retry synchronization after connectivity recovers.
+      if (finalTracks.size != remoteTracks.size) {
+        throw IllegalStateException(
+          "Spotify sync was incomplete: matched ${finalTracks.size} of ${remoteTracks.size} tracks. The existing local playlist was kept unchanged."
+        )
+      }
+
       mirrorPlaylist(source, finalTracks)
     }
 
@@ -416,6 +426,7 @@ constructor(
   private suspend fun fetchAllTracks(source: SpotifyImportSource): List<SpotifyTrack> {
     val tracks = ArrayList<SpotifyTrack>()
     var offset = 0
+    var expectedTotal: Int? = null
     val limit = 50
 
     while (true) {
@@ -446,10 +457,25 @@ constructor(
           }
         }
 
+      if (expectedTotal == null) {
+        expectedTotal = page.total
+      } else if (page.total != expectedTotal) {
+        throw IllegalStateException(
+          "Spotify library changed while it was being fetched. Please run sync again."
+        )
+      }
+
       if (page.items.isEmpty()) break
       tracks += page.items.filter { it.name.isNotBlank() }
       offset += page.items.size
       if (offset >= page.total || page.items.size < limit) break
+    }
+
+    val expected = expectedTotal ?: 0
+    if (tracks.size != expected) {
+      throw IllegalStateException(
+        "Spotify returned an incomplete library page set: received ${tracks.size} of ${expected} tracks. The local playlist was not changed."
+      )
     }
 
     return tracks
