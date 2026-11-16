@@ -310,15 +310,17 @@ constructor(
               async {
                 matchSemaphore.withPermit {
                   val existing =
-                    existingSongs.find {
-                      SpotifyMapper.matchScore(
-                        spotifyTitle = track.name,
-                        spotifyArtist = track.artists.joinToString(" ") { it.name },
-                        spotifyDurationMs = track.durationMs,
-                        candidateTitle = it.song.song.title,
-                        candidateArtist = it.song.artists.joinToString(" ") { it.name },
-                        candidateDurationSec = it.song.song.duration
-                      ) >= 0.80
+                    mapperMutex.withLock {
+                      existingSongs.find {
+                        SpotifyMapper.matchScore(
+                          spotifyTitle = track.name,
+                          spotifyArtist = track.artists.joinToString(" ") { it.name },
+                          spotifyDurationMs = track.durationMs,
+                          candidateTitle = it.song.song.title,
+                          candidateArtist = it.song.artists.joinToString(" ") { it.name },
+                          candidateDurationSec = it.song.song.duration
+                        ) >= 0.80
+                      }
                     }
 
                   if (existing != null) {
