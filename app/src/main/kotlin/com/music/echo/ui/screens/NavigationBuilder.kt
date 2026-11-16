@@ -562,6 +562,8 @@ fun NavGraphBuilder.navigationBuilder(
 
   composable("settings/spotify_import") { SpotifyImportScreen(navController) }
 
+  composable("sandia") { SandiaHomeScreen(navController) }
+
   composable(route = "settings/integrations/listen_together") {
     ListenTogetherSettings(navController, scrollBehavior)
   }

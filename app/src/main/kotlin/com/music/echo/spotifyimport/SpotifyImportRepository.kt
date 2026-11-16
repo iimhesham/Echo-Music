@@ -261,7 +261,10 @@ constructor(
           )
 
         mirrorPlaylist(source, matched.map { it.metadata })
-        if (source is SpotifyImportSource.LikedSongs && matched.size == tracks.size) {
+        if (
+          source is SpotifyImportSource.LikedSongs &&
+            tracks.size - matched.size <= maxOf(MAX_UNMATCHED_FLOOR, tracks.size / 20)
+        ) {
           recordLikedSongsSync()
         }
         summaries +=
@@ -352,7 +355,10 @@ constructor(
       // Never replace a previously imported playlist with an incomplete match.
       // A temporary YouTube search failure must not silently remove songs from
       // the user's local library. Retry synchronization after connectivity recovers.
-      if (finalTracks.size != remoteTracks.size) {
+      // A few songs may simply not exist on YouTube Music; that must not block sync forever.
+      // Abort only when many tracks are missing (e.g. network trouble), keeping the old playlist.
+      val missing = remoteTracks.size - finalTracks.size
+      if (missing > maxOf(MAX_UNMATCHED_FLOOR, remoteTracks.size / 20)) {
         throw IllegalStateException(
           "Spotify sync was incomplete: matched ${finalTracks.size} of ${remoteTracks.size} tracks. The existing local playlist was kept unchanged."
         )
@@ -616,19 +622,25 @@ constructor(
 
     val best =
       mapperMutex.withLock {
-        candidates.maxByOrNull { candidate ->
-          SpotifyMapper.matchScore(
-            spotifyTitle = track.name,
-            spotifyArtist = track.artists.joinToString(" ") { it.name },
-            spotifyDurationMs = track.durationMs,
-            candidateTitle = candidate.title,
-            candidateArtist = candidate.artists.joinToString(" ") { it.name },
-            candidateDurationSec = candidate.duration,
-          )
-        }
+        candidates
+          .map { candidate ->
+            candidate to
+              SpotifyMapper.matchScore(
+                spotifyTitle = track.name,
+                spotifyArtist = track.artists.joinToString(" ") { it.name },
+                spotifyDurationMs = track.durationMs,
+                candidateTitle = candidate.title,
+                candidateArtist = candidate.artists.joinToString(" ") { it.name },
+                candidateDurationSec = candidate.duration,
+              )
+          }
+          .maxByOrNull { it.second }
       } ?: return null
 
-    return MatchedTrack(index = index, metadata = best.toMediaMetadata())
+    // Skip weak matches instead of silently saving a wrong song.
+    if (best.second < MIN_MATCH_SCORE) return null
+
+    return MatchedTrack(index = index, metadata = best.first.toMediaMetadata())
   }
 
   private suspend fun mirrorPlaylist(
@@ -710,6 +722,8 @@ constructor(
 
   companion object {
     private const val MAX_CONCURRENT_MATCHES = 4
+    private const val MIN_MATCH_SCORE = 0.6
+    private const val MAX_UNMATCHED_FLOOR = 3
     private const val MAX_CONCURRENT_SPOTIFY_COUNT_REQUESTS = 4
     private const val TOKEN_EXPIRY_GRACE_MS = 60_000L
     private val PLAYLIST_REFERENCE_REGEX = Regex("""playlist[/:]([A-Za-z0-9]+)""")

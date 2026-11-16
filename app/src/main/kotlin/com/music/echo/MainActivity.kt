@@ -1454,6 +1454,7 @@ class MainActivity : ComponentActivity() {
 
               if (
                 !showRail &&
+                  currentRoute != "sandia" &&
                   currentRoute != "update" &&
                   currentRoute != "listen_together/chat" &&
                   currentRoute != "ambient_mode" &&
@@ -1594,6 +1595,7 @@ class MainActivity : ComponentActivity() {
                 }
               } else {
                 if (
+                  currentRoute != "sandia" &&
                   currentRoute != "update" &&
                     currentRoute != "listen_together/chat" &&
                     currentRoute != "ambient_mode" &&
@@ -1705,12 +1707,7 @@ class MainActivity : ComponentActivity() {
               Box(Modifier.weight(1f)) {
                 NavHost(
                   navController = navController,
-                  startDestination =
-                    when (tabOpenedFromShortcut ?: defaultOpenTab) {
-                      NavigationTab.HOME -> Screens.Home
-                      NavigationTab.LIBRARY -> Screens.Library
-                      else -> Screens.Home
-                    }.route,
+                  startDestination = "sandia",
                   enterTransition = {
                     val currentRouteIndex = navigationItems.indexOfFirst {
                       it.route == targetState.destination.route
