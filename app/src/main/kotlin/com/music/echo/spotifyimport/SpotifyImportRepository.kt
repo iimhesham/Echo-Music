@@ -74,6 +74,7 @@ constructor(
           isAuthenticated = true,
           accountName = accountName,
           accountAvatarUrl = avatarUrl,
+          lastSyncAt = prefs[SpotifyLikedSongsLastSyncKey],
         )
       }
 
@@ -90,6 +91,7 @@ constructor(
               isAuthenticated = true,
               accountName = refreshed[SpotifyAccountNameKey].orEmpty(),
               accountAvatarUrl = refreshed[SpotifyAccountAvatarUrlKey],
+              lastSyncAt = refreshed[SpotifyLikedSongsLastSyncKey],
             )
           },
           onFailure = {
@@ -119,6 +121,7 @@ constructor(
         isAuthenticated = true,
         accountName = prefs[SpotifyAccountNameKey].orEmpty(),
         accountAvatarUrl = prefs[SpotifyAccountAvatarUrlKey],
+        lastSyncAt = prefs[SpotifyLikedSongsLastSyncKey],
       )
     }
 
@@ -693,6 +696,7 @@ data class SpotifyImportSession(
   val isAuthenticated: Boolean = false,
   val accountName: String = "",
   val accountAvatarUrl: String? = null,
+  val lastSyncAt: Long? = null,
 )
 
 sealed interface SpotifyImportSource {
