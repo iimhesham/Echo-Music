@@ -63,6 +63,7 @@ constructor(
               isAuthenticated = session.isAuthenticated,
               accountName = session.accountName,
               accountAvatarUrl = session.accountAvatarUrl,
+              lastSyncAt = session.lastSyncAt,
               isLoading = false,
             )
           }
@@ -112,6 +113,27 @@ constructor(
               errorMessage = error.message,
             )
           }
+        }
+    }
+  }
+
+  fun syncLikedSongs() {
+    if (uiState.value.progress != null || uiState.value.isLoading) return
+    viewModelScope.launch(Dispatchers.IO) {
+      _uiState.update { it.copy(isLoading = true, errorMessage = null, summary = null) }
+      runCatching { repository.syncPlaylistFast("SPOTIFY_LIKED_SONGS") }
+        .onSuccess {
+          _uiState.update {
+            it.copy(
+              isLoading = false,
+              lastSyncAt = repository.lastLikedSongsSyncAt(),
+            )
+          }
+        }
+        .onFailure { error ->
+          if (error is CancellationException) throw error
+          reportException(error)
+          _uiState.update { it.copy(isLoading = false, errorMessage = error.message) }
         }
     }
   }
