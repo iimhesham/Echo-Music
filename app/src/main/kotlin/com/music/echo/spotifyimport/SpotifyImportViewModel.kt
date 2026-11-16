@@ -121,20 +121,21 @@ constructor(
     if (uiState.value.progress != null || uiState.value.isLoading) return
     viewModelScope.launch(Dispatchers.IO) {
       _uiState.update { it.copy(isLoading = true, errorMessage = null, summary = null) }
-      runCatching { repository.syncPlaylistFast("SPOTIFY_LIKED_SONGS") }
-        .onSuccess {
-          _uiState.update {
-            it.copy(
-              isLoading = false,
-              lastSyncAt = repository.lastLikedSongsSyncAt(),
-            )
-          }
+      try {
+        repository.syncPlaylistFast("SPOTIFY_LIKED_SONGS")
+        val lastSyncAt = repository.lastLikedSongsSyncAt()
+        _uiState.update {
+          it.copy(
+            isLoading = false,
+            lastSyncAt = lastSyncAt,
+          )
         }
-        .onFailure { error ->
-          if (error is CancellationException) throw error
-          reportException(error)
-          _uiState.update { it.copy(isLoading = false, errorMessage = error.message) }
-        }
+      } catch (error: CancellationException) {
+        throw error
+      } catch (error: Throwable) {
+        reportException(error)
+        _uiState.update { it.copy(isLoading = false, errorMessage = error.message) }
+      }
     }
   }
 
