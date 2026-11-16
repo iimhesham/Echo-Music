@@ -107,6 +107,9 @@ constructor(
     spKey: String,
   ): SpotifyImportSession =
     withContext(Dispatchers.IO) {
+      // Validate the new session before replacing any previously working credentials.
+      val token = SpotifyAuth.fetchAccessToken(spDc = spDc, spKey = spKey).getOrThrow()
+      Spotify.accessToken = token.accessToken
       context.dataStore.edit { prefs ->
         prefs[SpotifySpDcKey] = spDc
         if (spKey.isNotBlank()) {
@@ -114,8 +117,10 @@ constructor(
         } else {
           prefs.remove(SpotifySpKeyKey)
         }
+        prefs[SpotifyAccessTokenKey] = token.accessToken
+        prefs[SpotifyAccessTokenExpiresAtKey] = token.accessTokenExpirationTimestampMs
       }
-      refreshAccessToken(spDc = spDc, spKey = spKey).getOrThrow()
+      refreshProfile()
       val prefs = context.dataStore.data.first()
       SpotifyImportSession(
         isAuthenticated = true,
