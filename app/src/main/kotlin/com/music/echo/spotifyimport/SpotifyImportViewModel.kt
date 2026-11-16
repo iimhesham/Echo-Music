@@ -145,7 +145,11 @@ constructor(
       runCatching { repository.loadSources() }
         .onSuccess { loadedSources ->
           updateSources {
-            val selectedIds = loadedSources.mapTo(LinkedHashSet()) { it.id }
+            // The user's primary goal is their Liked Songs library; leave other playlists opt-in.
+            val selectedIds =
+              loadedSources
+                .filter { it.type == SpotifyImportSourceType.LIKED_SONGS }
+                .mapTo(LinkedHashSet()) { it.id }
             loadedSources to
               { state ->
                 state.copy(
