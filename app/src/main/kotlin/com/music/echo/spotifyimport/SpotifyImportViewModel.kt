@@ -267,11 +267,12 @@ constructor(
             repository.importSources(selectedSources) { progress ->
               _uiState.update { it.copy(progress = progress) }
             }
+          val lastSyncAt = repository.lastLikedSongsSyncAt()
           _uiState.update {
             it.copy(
               progress = null,
               summary = summary,
-              lastSyncAt = repository.lastLikedSongsSyncAt(),
+              lastSyncAt = lastSyncAt,
             )
           }
         } catch (error: CancellationException) {
