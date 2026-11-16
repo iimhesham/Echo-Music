@@ -138,7 +138,10 @@ constructor(
 
   suspend fun logout() {
     withContext(Dispatchers.IO) {
+      runCatching { SpotifyLikedSongsSyncWorker.cancel(context) }
+        .onFailure { timber.log.Timber.e(it, "Failed to cancel periodic Spotify sync") }
       context.dataStore.edit { prefs ->
+        prefs.remove(SpotifyLikedSongsLastSyncKey)
         prefs.remove(SpotifySpDcKey)
         prefs.remove(SpotifySpKeyKey)
         prefs.remove(SpotifyAccessTokenKey)
