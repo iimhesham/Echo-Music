@@ -300,34 +300,45 @@ constructor(
       timber.log.Timber.d("SyncPlaylist: Fetched ${remoteTracks.size} tracks from Spotify")
       val existingSongs = database.playlistSongs(localPlaylistId).first()
 
-      val finalTracks = ArrayList<MediaMetadata>()
+      // Match newly added tracks concurrently, but retain Spotify's original order.
+      // This also avoids doing more than four YouTube searches at the same time.
+      val matchSemaphore = Semaphore(MAX_CONCURRENT_MATCHES)
+      val finalTracks =
+        coroutineScope {
+          remoteTracks
+            .mapIndexed { index, track ->
+              async {
+                matchSemaphore.withPermit {
+                  val existing =
+                    existingSongs.find {
+                      SpotifyMapper.matchScore(
+                        spotifyTitle = track.name,
+                        spotifyArtist = track.artists.joinToString(" ") { it.name },
+                        spotifyDurationMs = track.durationMs,
+                        candidateTitle = it.song.song.title,
+                        candidateArtist = it.song.artists.joinToString(" ") { it.name },
+                        candidateDurationSec = it.song.song.duration
+                      ) > 80.0
+                    }
 
-      for ((index, track) in remoteTracks.withIndex()) {
-        val existing =
-          existingSongs.find {
-            SpotifyMapper.matchScore(
-              spotifyTitle = track.name,
-              spotifyArtist = track.artists.joinToString(" ") { it.name },
-              spotifyDurationMs = track.durationMs,
-              candidateTitle = it.song.song.title,
-              candidateArtist = it.song.artists.joinToString(" ") { it.name },
-              candidateDurationSec = it.song.song.duration
-            ) > 80.0
-          }
-
-        if (existing != null) {
-          finalTracks.add(existing.song.toMediaMetadata())
-        } else {
-          timber.log.Timber.d("SyncPlaylist: Searching for new track ${track.name}")
-          val matched = matchTrack(track, index)
-          if (matched != null) {
-            timber.log.Timber.d("SyncPlaylist: Found match for ${track.name}")
-            finalTracks.add(matched.metadata)
-          } else {
-            timber.log.Timber.e("SyncPlaylist: Failed to find match for ${track.name}")
-          }
+                  if (existing != null) {
+                    existing.song.toMediaMetadata()
+                  } else {
+                    timber.log.Timber.d("SyncPlaylist: Searching for new track ${track.name}")
+                    matchTrack(track, index)?.metadata.also { matched ->
+                      if (matched == null) {
+                        timber.log.Timber.e("SyncPlaylist: Failed to find match for ${track.name}")
+                      } else {
+                        timber.log.Timber.d("SyncPlaylist: Found match for ${track.name}")
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            .awaitAll()
+            .filterNotNull()
         }
-      }
 
       timber.log.Timber.d("SyncPlaylist: Final tracks count: ${finalTracks.size}")
 
