@@ -36,11 +36,6 @@ android {
     versionCode = 167
     versionName = "1.4.6"
 
-    // Public Spotify OAuth client ID (configure in local.properties or CI environment).
-    val spotifyClientId =
-      localProperties.getProperty("SPOTIFY_CLIENT_ID") ?: System.getenv("SPOTIFY_CLIENT_ID") ?: ""
-    buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"$spotifyClientId\"")
-
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     vectorDrawables.useSupportLibrary = true
 
