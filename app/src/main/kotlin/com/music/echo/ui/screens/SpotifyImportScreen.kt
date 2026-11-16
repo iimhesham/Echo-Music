@@ -431,8 +431,8 @@ private fun SpotifyLoginSheet(
 
               webView = this
               mainWebView = this
-              cookieManager.removeAllCookies(null)
-              cookieManager.flush()
+              // Keep cookies for other services (especially YouTube Music) intact.
+              // Spotify's login page can reuse its own existing session or prompt for sign-in.
               loadUrl(echo.music.iad1tya.spotify.SpotifyAuth.LOGIN_URL)
             }
           container.addView(
