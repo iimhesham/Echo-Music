@@ -51,6 +51,16 @@ jobs:
           ls -laR app/build/outputs/apk/ 2>/dev/null || true
           echo "=== Done ==="
 
+      - name: Upload APK artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echo-Music-debug-APK
+          path: |
+            app/build/outputs/apk/universalGms/debug/app-universal-gms-debug.apk
+            build.log
+          if-no-files-found: error
+
       - name: Save build log summary to a branch
         if: always()
         run: |
@@ -66,13 +76,3 @@ jobs:
           git add errors.txt tail.txt 2>/dev/null || true
           git commit -qm "build log" || true
           git push -f origin buildlog || true
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: my-apk-and-log
-          path: |
-            app/build/outputs/apk/**/*.apk
-            app/build/outputs/**/*.apk
-            build.log
-          if-no-files-found: warn
