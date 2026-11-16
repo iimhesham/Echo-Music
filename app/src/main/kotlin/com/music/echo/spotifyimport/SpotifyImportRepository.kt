@@ -318,7 +318,7 @@ constructor(
                         candidateTitle = it.song.song.title,
                         candidateArtist = it.song.artists.joinToString(" ") { it.name },
                         candidateDurationSec = it.song.song.duration
-                      ) > 0.80
+                      ) >= 0.80
                     }
 
                   if (existing != null) {
