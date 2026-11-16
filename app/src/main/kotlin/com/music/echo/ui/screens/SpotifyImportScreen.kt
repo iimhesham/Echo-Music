@@ -29,6 +29,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import java.text.DateFormat
+import java.util.Date
 import echo.music.iad1tya.LocalPlayerAwareWindowInsets
 import echo.music.iad1tya.R
 import echo.music.iad1tya.spotify.SpotifyAuth
@@ -189,6 +191,19 @@ private fun spotifyImportItems(
       icon = painterResource(R.drawable.playlist_add),
       enabled = state.canImport,
       onClick = { viewModel.importSelectedSources() },
+    ),
+    Material3SettingsItem(
+      title = { Text("Sync Liked Songs Now") },
+      description = {
+        Text(
+          state.lastSyncAt?.let {
+            "Last synced: ${DateFormat.getDateTimeInstance().format(Date(it))}"
+          } ?: "Import and synchronize your Spotify Liked Songs"
+        )
+      },
+      icon = painterResource(R.drawable.sync),
+      enabled = idle,
+      onClick = { viewModel.syncLikedSongs() },
     ),
     Material3SettingsItem(
       title = { Text(stringResource(R.string.spotify_refresh)) },
@@ -416,8 +431,8 @@ private fun SpotifyLoginSheet(
 
               webView = this
               mainWebView = this
-              cookieManager.removeAllCookies(null)
-              cookieManager.flush()
+              // Keep cookies for other services (especially YouTube Music) intact.
+              // Spotify's login page can reuse its own existing session or prompt for sign-in.
               loadUrl(echo.music.iad1tya.spotify.SpotifyAuth.LOGIN_URL)
             }
           container.addView(

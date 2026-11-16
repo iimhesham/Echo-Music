@@ -65,6 +65,7 @@ data class SpotifyImportUiState(
   val isAuthenticated: Boolean = false,
   val accountName: String = "",
   val accountAvatarUrl: String? = null,
+  val lastSyncAt: Long? = null,
   val isLoading: Boolean = false,
   val sources: List<SpotifyImportSourceUi> = emptyList(),
   val selectedSourceIds: Set<String> = emptySet(),

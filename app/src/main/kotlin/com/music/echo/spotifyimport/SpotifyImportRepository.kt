@@ -15,6 +15,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.SpotifyAccessTokenExpiresAtKey
 import echo.music.iad1tya.constants.SpotifyAccessTokenKey
+import echo.music.iad1tya.constants.SpotifyLikedSongsLastSyncKey
 import echo.music.iad1tya.constants.SpotifyAccountAvatarUrlKey
 import echo.music.iad1tya.constants.SpotifyAccountNameKey
 import echo.music.iad1tya.constants.SpotifySpDcKey
@@ -73,6 +74,7 @@ constructor(
           isAuthenticated = true,
           accountName = accountName,
           accountAvatarUrl = avatarUrl,
+          lastSyncAt = prefs[SpotifyLikedSongsLastSyncKey],
         )
       }
 
@@ -89,6 +91,7 @@ constructor(
               isAuthenticated = true,
               accountName = refreshed[SpotifyAccountNameKey].orEmpty(),
               accountAvatarUrl = refreshed[SpotifyAccountAvatarUrlKey],
+              lastSyncAt = refreshed[SpotifyLikedSongsLastSyncKey],
             )
           },
           onFailure = {
@@ -104,6 +107,9 @@ constructor(
     spKey: String,
   ): SpotifyImportSession =
     withContext(Dispatchers.IO) {
+      // Validate the new session before replacing any previously working credentials.
+      val token = SpotifyAuth.fetchAccessToken(spDc = spDc, spKey = spKey).getOrThrow()
+      Spotify.accessToken = token.accessToken
       context.dataStore.edit { prefs ->
         prefs[SpotifySpDcKey] = spDc
         if (spKey.isNotBlank()) {
@@ -111,19 +117,36 @@ constructor(
         } else {
           prefs.remove(SpotifySpKeyKey)
         }
+        prefs[SpotifyAccessTokenKey] = token.accessToken
+        prefs[SpotifyAccessTokenExpiresAtKey] = token.accessTokenExpirationTimestampMs
       }
-      refreshAccessToken(spDc = spDc, spKey = spKey).getOrThrow()
+      refreshProfile()
       val prefs = context.dataStore.data.first()
       SpotifyImportSession(
         isAuthenticated = true,
         accountName = prefs[SpotifyAccountNameKey].orEmpty(),
         accountAvatarUrl = prefs[SpotifyAccountAvatarUrlKey],
+        lastSyncAt = prefs[SpotifyLikedSongsLastSyncKey],
       )
     }
 
+  suspend fun lastLikedSongsSyncAt(): Long? =
+    context.dataStore.data.first()[SpotifyLikedSongsLastSyncKey]
+
+  private suspend fun recordLikedSongsSync() {
+    context.dataStore.edit { prefs ->
+      prefs[SpotifyLikedSongsLastSyncKey] = System.currentTimeMillis()
+    }
+    runCatching { SpotifyLikedSongsSyncWorker.schedule(context) }
+      .onFailure { timber.log.Timber.e(it, "Failed to schedule periodic Spotify sync") }
+  }
+
   suspend fun logout() {
     withContext(Dispatchers.IO) {
+      runCatching { SpotifyLikedSongsSyncWorker.cancel(context) }
+        .onFailure { timber.log.Timber.e(it, "Failed to cancel periodic Spotify sync") }
       context.dataStore.edit { prefs ->
+        prefs.remove(SpotifyLikedSongsLastSyncKey)
         prefs.remove(SpotifySpDcKey)
         prefs.remove(SpotifySpKeyKey)
         prefs.remove(SpotifyAccessTokenKey)
@@ -207,6 +230,7 @@ constructor(
         val tracks = fetchAllTracks(source)
         if (tracks.isEmpty()) {
           mirrorPlaylist(source, emptyList())
+          if (source is SpotifyImportSource.LikedSongs) recordLikedSongsSync()
           summaries +=
             SpotifyImportSourceSummaryUi(
               title = source.title,
@@ -237,6 +261,9 @@ constructor(
           )
 
         mirrorPlaylist(source, matched.map { it.metadata })
+        if (source is SpotifyImportSource.LikedSongs && matched.size == tracks.size) {
+          recordLikedSongsSync()
+        }
         summaries +=
           SpotifyImportSourceSummaryUi(
             title = source.title,
@@ -278,37 +305,61 @@ constructor(
       timber.log.Timber.d("SyncPlaylist: Fetched ${remoteTracks.size} tracks from Spotify")
       val existingSongs = database.playlistSongs(localPlaylistId).first()
 
-      val finalTracks = ArrayList<MediaMetadata>()
+      // Match newly added tracks concurrently, but retain Spotify's original order.
+      // This also avoids doing more than four YouTube searches at the same time.
+      val matchSemaphore = Semaphore(MAX_CONCURRENT_MATCHES)
+      val finalTracks =
+        coroutineScope {
+          remoteTracks
+            .mapIndexed { index, track ->
+              async {
+                matchSemaphore.withPermit {
+                  val existing =
+                    mapperMutex.withLock {
+                      existingSongs.find {
+                        SpotifyMapper.matchScore(
+                          spotifyTitle = track.name,
+                          spotifyArtist = track.artists.joinToString(" ") { it.name },
+                          spotifyDurationMs = track.durationMs,
+                          candidateTitle = it.song.song.title,
+                          candidateArtist = it.song.artists.joinToString(" ") { it.name },
+                          candidateDurationSec = it.song.song.duration
+                        ) >= 0.80
+                      }
+                    }
 
-      for ((index, track) in remoteTracks.withIndex()) {
-        val existing =
-          existingSongs.find {
-            SpotifyMapper.matchScore(
-              spotifyTitle = track.name,
-              spotifyArtist = track.artists.joinToString(" ") { it.name },
-              spotifyDurationMs = track.durationMs,
-              candidateTitle = it.song.song.title,
-              candidateArtist = it.song.artists.joinToString(" ") { it.name },
-              candidateDurationSec = it.song.song.duration
-            ) > 80.0
-          }
-
-        if (existing != null) {
-          finalTracks.add(existing.song.toMediaMetadata())
-        } else {
-          timber.log.Timber.d("SyncPlaylist: Searching for new track ${track.name}")
-          val matched = matchTrack(track, index)
-          if (matched != null) {
-            timber.log.Timber.d("SyncPlaylist: Found match for ${track.name}")
-            finalTracks.add(matched.metadata)
-          } else {
-            timber.log.Timber.e("SyncPlaylist: Failed to find match for ${track.name}")
-          }
+                  if (existing != null) {
+                    existing.song.toMediaMetadata()
+                  } else {
+                    timber.log.Timber.d("SyncPlaylist: Searching for new track ${track.name}")
+                    matchTrack(track, index)?.metadata.also { matched ->
+                      if (matched == null) {
+                        timber.log.Timber.e("SyncPlaylist: Failed to find match for ${track.name}")
+                      } else {
+                        timber.log.Timber.d("SyncPlaylist: Found match for ${track.name}")
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            .awaitAll()
+            .filterNotNull()
         }
-      }
 
       timber.log.Timber.d("SyncPlaylist: Final tracks count: ${finalTracks.size}")
+
+      // Never replace a previously imported playlist with an incomplete match.
+      // A temporary YouTube search failure must not silently remove songs from
+      // the user's local library. Retry synchronization after connectivity recovers.
+      if (finalTracks.size != remoteTracks.size) {
+        throw IllegalStateException(
+          "Spotify sync was incomplete: matched ${finalTracks.size} of ${remoteTracks.size} tracks. The existing local playlist was kept unchanged."
+        )
+      }
+
       mirrorPlaylist(source, finalTracks)
+      if (source is SpotifyImportSource.LikedSongs) recordLikedSongsSync()
     }
 
   private suspend fun ensureAuthenticated() {
@@ -416,6 +467,7 @@ constructor(
   private suspend fun fetchAllTracks(source: SpotifyImportSource): List<SpotifyTrack> {
     val tracks = ArrayList<SpotifyTrack>()
     var offset = 0
+    var expectedTotal: Int? = null
     val limit = 50
 
     while (true) {
@@ -446,10 +498,25 @@ constructor(
           }
         }
 
+      if (expectedTotal == null) {
+        expectedTotal = page.total
+      } else if (page.total != expectedTotal) {
+        throw IllegalStateException(
+          "Spotify library changed while it was being fetched. Please run sync again."
+        )
+      }
+
       if (page.items.isEmpty()) break
       tracks += page.items.filter { it.name.isNotBlank() }
       offset += page.items.size
       if (offset >= page.total || page.items.size < limit) break
+    }
+
+    val expected = expectedTotal ?: 0
+    if (tracks.size != expected) {
+      throw IllegalStateException(
+        "Spotify returned an incomplete library page set: received ${tracks.size} of ${expected} tracks. The local playlist was not changed."
+      )
     }
 
     return tracks
@@ -654,6 +721,7 @@ data class SpotifyImportSession(
   val isAuthenticated: Boolean = false,
   val accountName: String = "",
   val accountAvatarUrl: String? = null,
+  val lastSyncAt: Long? = null,
 )
 
 sealed interface SpotifyImportSource {

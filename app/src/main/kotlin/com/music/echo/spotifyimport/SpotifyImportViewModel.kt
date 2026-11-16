@@ -63,6 +63,7 @@ constructor(
               isAuthenticated = session.isAuthenticated,
               accountName = session.accountName,
               accountAvatarUrl = session.accountAvatarUrl,
+              lastSyncAt = session.lastSyncAt,
               isLoading = false,
             )
           }
@@ -116,13 +117,39 @@ constructor(
     }
   }
 
+  fun syncLikedSongs() {
+    if (uiState.value.progress != null || uiState.value.isLoading) return
+    viewModelScope.launch(Dispatchers.IO) {
+      _uiState.update { it.copy(isLoading = true, errorMessage = null, summary = null) }
+      try {
+        repository.syncPlaylistFast("SPOTIFY_LIKED_SONGS")
+        val lastSyncAt = repository.lastLikedSongsSyncAt()
+        _uiState.update {
+          it.copy(
+            isLoading = false,
+            lastSyncAt = lastSyncAt,
+          )
+        }
+      } catch (error: CancellationException) {
+        throw error
+      } catch (error: Throwable) {
+        reportException(error)
+        _uiState.update { it.copy(isLoading = false, errorMessage = error.message) }
+      }
+    }
+  }
+
   fun loadSources() {
     viewModelScope.launch(Dispatchers.IO) {
       _uiState.update { it.copy(isLoading = true, errorMessage = null) }
       runCatching { repository.loadSources() }
         .onSuccess { loadedSources ->
           updateSources {
-            val selectedIds = loadedSources.mapTo(LinkedHashSet()) { it.id }
+            // The user's primary goal is their Liked Songs library; leave other playlists opt-in.
+            val selectedIds =
+              loadedSources
+                .filter { it.type == SpotifyImportSourceType.LIKED_SONGS }
+                .mapTo(LinkedHashSet()) { it.id }
             loadedSources to
               { state ->
                 state.copy(
@@ -244,10 +271,12 @@ constructor(
             repository.importSources(selectedSources) { progress ->
               _uiState.update { it.copy(progress = progress) }
             }
+          val lastSyncAt = repository.lastLikedSongsSyncAt()
           _uiState.update {
             it.copy(
               progress = null,
               summary = summary,
+              lastSyncAt = lastSyncAt,
             )
           }
         } catch (error: CancellationException) {
