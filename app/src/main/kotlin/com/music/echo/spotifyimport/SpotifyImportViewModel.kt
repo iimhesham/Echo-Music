@@ -270,6 +270,7 @@ constructor(
             it.copy(
               progress = null,
               summary = summary,
+              lastSyncAt = repository.lastLikedSongsSyncAt(),
             )
           }
         } catch (error: CancellationException) {
