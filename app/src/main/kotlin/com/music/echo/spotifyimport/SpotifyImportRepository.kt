@@ -256,7 +256,9 @@ constructor(
           )
 
         mirrorPlaylist(source, matched.map { it.metadata })
-        if (source is SpotifyImportSource.LikedSongs) recordLikedSongsSync()
+        if (source is SpotifyImportSource.LikedSongs && matched.size == tracks.size) {
+          recordLikedSongsSync()
+        }
         summaries +=
           SpotifyImportSourceSummaryUi(
             title = source.title,
