@@ -132,6 +132,8 @@ constructor(
     context.dataStore.edit { prefs ->
       prefs[SpotifyLikedSongsLastSyncKey] = System.currentTimeMillis()
     }
+    runCatching { SpotifyLikedSongsSyncWorker.schedule(context) }
+      .onFailure { timber.log.Timber.e(it, "Failed to schedule periodic Spotify sync") }
   }
 
   suspend fun logout() {
