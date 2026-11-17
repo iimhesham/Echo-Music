@@ -95,10 +95,27 @@ class SpotifyExportImporter @Inject constructor(
   }
 
   private suspend fun matchTrack(t: ExportTrack): MediaMetadata? {
-    val candidates =
-      YouTube.search("${t.track} ${t.artist}", YouTube.SearchFilter.FILTER_SONG)
-        .getOrNull()?.items?.filterIsInstance<SongItem>().orEmpty().take(10)
-    val best = candidates.maxByOrNull { score(t, it) } ?: return null
+    val queries =
+      listOf(
+        "${t.track} ${t.artist}",
+        "${t.artist} ${t.track}",
+        t.track,
+      ).map(String::trim).filter(String::isNotBlank).distinct()
+    val candidatesById = LinkedHashMap<String, SongItem>()
+
+    for (query in queries) {
+      val result =
+        YouTube.search(query, YouTube.SearchFilter.FILTER_SONG).getOrElse { error ->
+          if (error is CancellationException) throw error
+          null
+        } ?: continue
+
+      result.items.filterIsInstance<SongItem>().forEach { candidatesById.putIfAbsent(it.id, it) }
+      val best = candidatesById.values.maxByOrNull { score(t, it) }
+      if (best != null && score(t, best) >= 0.97) return best.toMediaMetadata()
+    }
+
+    val best = candidatesById.values.maxByOrNull { score(t, it) } ?: return null
     if (score(t, best) < MIN_SCORE) return null
     return best.toMediaMetadata()
   }

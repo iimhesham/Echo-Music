@@ -388,19 +388,22 @@ constructor(
       database.withTransaction {
         val existing = getPlaylistById(playlistId)
         val entity =
-          existing?.playlist?.copy(
-            name = "Liked Songs",
-            bookmarkedAt = existing.playlist.bookmarkedAt ?: now,
-            lastUpdateTime = now,
-            isEditable = true,
-          )
-            ?: PlaylistEntity(
+          if (existing != null) {
+            existing.playlist.copy(
+              name = "Liked Songs",
+              bookmarkedAt = existing.playlist.bookmarkedAt ?: now,
+              lastUpdateTime = now,
+              isEditable = true,
+            )
+          } else {
+            PlaylistEntity(
               id = playlistId,
               name = "Liked Songs",
               bookmarkedAt = now,
               lastUpdateTime = now,
               isEditable = true,
             )
+          }
 
         if (existing == null) insert(entity) else update(entity)
 
