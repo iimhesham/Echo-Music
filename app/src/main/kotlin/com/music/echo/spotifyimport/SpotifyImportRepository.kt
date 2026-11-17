@@ -251,6 +251,7 @@ constructor(
           return@forEachIndexed
         }
 
+        val existingSongs = database.playlistSongs(source.localPlaylistId).first()
         val matched =
           matchTracks(
             sourceIndex = sourceIndex,
@@ -259,11 +260,36 @@ constructor(
             tracks = tracks,
             onProgress = onProgress,
           )
+        val matchedByIndex = matched.associateBy { it.index }
+        val usedExistingIds = HashSet<String>()
+        val finalTracks =
+          tracks.mapIndexedNotNull { index, track ->
+            matchedByIndex[index]?.metadata
+              ?: existingSongs.firstOrNull { existing ->
+                existing.song.song.id !in usedExistingIds &&
+                  mapperMutex.withLock {
+                    SpotifyMapper.matchScore(
+                      spotifyTitle = track.name,
+                      spotifyArtist = track.artists.joinToString(" ") { it.name },
+                      spotifyDurationMs = track.durationMs,
+                      candidateTitle = existing.song.song.title,
+                      candidateArtist = existing.song.artists.joinToString(" ") { it.name },
+                      candidateDurationSec = existing.song.song.duration,
+                    ) >= 0.80
+                  }
+              }?.let { existing ->
+                usedExistingIds += existing.song.song.id
+                existing.song.toMediaMetadata()
+              }
+          }.distinctBy { it.id }
 
-        mirrorPlaylist(source, matched.map { it.metadata })
+        // Re-imports reuse already-matched local tracks if a fresh YouTube search fails.
+        // This prevents a partial API/search response from shrinking a working playlist.
+        mirrorPlaylist(source, finalTracks)
+        val failedCount = (tracks.size - finalTracks.size).coerceAtLeast(0)
         if (
           source is SpotifyImportSource.LikedSongs &&
-            tracks.size - matched.size <= maxOf(MAX_UNMATCHED_FLOOR, tracks.size / 20)
+            failedCount <= maxOf(MAX_UNMATCHED_FLOOR, tracks.size / 20)
         ) {
           recordLikedSongsSync()
         }
@@ -271,15 +297,15 @@ constructor(
           SpotifyImportSourceSummaryUi(
             title = source.title,
             totalTracks = tracks.size,
-            importedTracks = matched.size,
-            failedTracks = tracks.size - matched.size,
+            importedTracks = finalTracks.size,
+            failedTracks = failedCount,
           )
         onProgress(
           SpotifyImportProgressUi(
             sourceTitle = source.title,
             completedSources = sourceIndex + 1,
             totalSources = sources.size,
-            matchedTracks = matched.size,
+            matchedTracks = finalTracks.size,
             totalTracks = tracks.size,
             percent = progressPercent(sourceIndex + 1, sources.size, 0, 0),
           ),
