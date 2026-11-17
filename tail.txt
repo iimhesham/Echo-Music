@@ -1,0 +1,120 @@
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/extensions/ExtensionManager.kt:132:36 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/extensions/ExtensionManager.kt:338:41 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/extensions/ExtensionManager.kt:373:37 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/extensions/ExtensionManager.kt:411:44 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/extensions/ExtensionManager.kt:463:53 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/extensions/ExtensionManager.kt:509:56 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/listentogether/ListenTogetherServers.kt:43:5 This is a delicate API and its use requires care. Make sure you fully read and understand documentation of the declaration that is marked as a delicate API.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/listentogether/ListenTogetherServers.kt:48:22 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/playback/AudioExportService.kt:197:32 Elvis operator (?:) always returns the left operand of non-nullable type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/playback/AudioExportService.kt:227:22 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/playback/AudioExportService.kt:329:18 'fun CoroutineScope.launch(context: NonCancellable, start: CoroutineStart = ..., block: suspend CoroutineScope.() -> Unit): Job' is deprecated. Passing a NonCancellable to `launch` breaks structured concurrency, leading to hard-to-diagnose errors. This pattern should be avoided. This overload will be deprecated with an error in the future.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/playback/MediaLibrarySessionCallback.kt:1028:26 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/playback/MediaLibrarySessionCallback.kt:1028:36 'static field ENTRY_CONTENT_TYPE: String' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/podcast/PodcastVideoProvider.kt:148:41 Elvis operator (?:) always returns the left operand of non-nullable type 'Int'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/spotify/LoadSpotifyRecommendationsUseCase.kt:80:68 Unnecessary safe call on a non-null receiver of type 'List<SpotifyImage>'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/spotifyimport/SpotifyImportRepository.kt:521:34 Elvis operator (?:) always returns the left operand of non-nullable type 'Int'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/component/BottomSheetMenu.kt:72:79 'val windowInsets: WindowInsets' is deprecated. Renamed as modalWindowInsets.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/component/CreateFromTasteDialog.kt:64:46 Elvis operator (?:) always returns the left operand of non-nullable type 'String'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/component/Lyrics.kt:1310:74 Unnecessary non-null assertion (!!) on a non-null receiver of type 'String'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/component/MetroLyrics.kt:929:33 Unnecessary non-null assertion (!!) on a non-null receiver of type 'MetroWordTimestamp'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/component/UpdaterComponents.kt:276:7 'fun ClickableText(text: AnnotatedString, modifier: Modifier = ..., style: TextStyle = ..., softWrap: Boolean = ..., overflow: TextOverflow = ..., maxLines: Int = ..., onTextLayout: (TextLayoutResult) -> Unit = ..., onClick: (Int) -> Unit): Unit' is deprecated. Use Text or BasicText and pass an AnnotatedString that contains a LinkAnnotation. Check LinkAnnotation's documentation for more details and samples.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/component/UpdaterComponents.kt:280:27 'static fun startActivity(p0: Context, p1: Intent, p2: Bundle?): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/component/backdrop/internal/Paint.kt:18:8 'fun asFrameworkPaint(): Paint' is deprecated. Use platform-specific extension to get platform reference.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/component/backdrop/internal/Paint.kt:23:8 'fun asFrameworkPaint(): Paint' is deprecated. Use platform-specific extension to get platform reference.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/menu/PlaylistMenu.kt:736:33 Condition is always 'true'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/menu/YouTubePlaylistMenu.kt:152:47 Elvis operator (?:) always returns the left operand of non-nullable type 'String'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/menu/YouTubePlaylistMenu.kt:672:59 Elvis operator (?:) always returns the left operand of non-nullable type 'String'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/player/Player.kt:1942:34 Unnecessary safe call on a non-null receiver of type 'MediaMetadata'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/DetailedListeningHistoryScreen.kt:36:50 'fun <reified VM : ViewModel> hiltViewModel(viewModelStoreOwner: ViewModelStoreOwner = ..., key: String? = ...): VM' is deprecated. Moved to package: androidx.hilt.lifecycle.viewmodel.compose.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/ListeningSummaryScreen.kt:35:42 'fun <reified VM : ViewModel> hiltViewModel(viewModelStoreOwner: ViewModelStoreOwner = ..., key: String? = ...): VM' is deprecated. Moved to package: androidx.hilt.lifecycle.viewmodel.compose.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/LoginScreen.kt:276:11 'var databaseEnabled: Boolean' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/SpotifyFileImportScreen.kt:37:43 'fun <reified VM : ViewModel> hiltViewModel(viewModelStoreOwner: ViewModelStoreOwner = ..., key: String? = ...): VM' is deprecated. Moved to package: androidx.hilt.lifecycle.viewmodel.compose.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/SpotifyImportScreen.kt:52:52 'fun <reified VM : ViewModel> hiltViewModel(viewModelStoreOwner: ViewModelStoreOwner = ..., key: String? = ...): VM' is deprecated. Moved to package: androidx.hilt.lifecycle.viewmodel.compose.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/artist/ArtistScreen.kt:361:70 Unnecessary safe call on a non-null receiver of type 'ArtistPage'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/artist/ArtistScreen.kt:454:47 Unnecessary safe call on a non-null receiver of type 'ArtistPage'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/artist/ArtistScreen.kt:455:51 Unnecessary safe call on a non-null receiver of type 'ArtistPage'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/equalizer/axion/AutoEqBottomSheet.kt:45:25 Redundant creation of Json format. Creating instances for each usage can be slow.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/library/LocalSongScreen.kt:480:31 'fun largeTopAppBarColors(containerColor: Color = ..., scrolledContainerColor: Color = ..., navigationIconContentColor: Color = ..., titleContentColor: Color = ..., actionIconContentColor: Color = ...): TopAppBarColors' is deprecated. Use topAppBarColors instead.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/library/LocalSongScreen.kt:1035:22 Unnecessary non-null assertion (!!) on a non-null receiver of type 'LocalSongScanSummary'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/musicflow/MusicFlowScreen.kt:120:35 'fun <reified VM : ViewModel> hiltViewModel(viewModelStoreOwner: ViewModelStoreOwner = ..., key: String? = ...): VM' is deprecated. Moved to package: androidx.hilt.lifecycle.viewmodel.compose.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/playlist/CachePlaylistScreen.kt:455:74 Elvis operator (?:) always returns the left operand of non-nullable type 'Int'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/playlist/LocalPlaylistScreen.kt:1211:38 Condition is always 'true'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/recognition/RecognitionScreen.kt:252:17 'when' is exhaustive so 'else' is redundant here.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/search/suggestions/AppleMusicScraper.kt:33:22 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/settings/ExtensionSettings.kt:92:45 'fun <reified VM : ViewModel> hiltViewModel(viewModelStoreOwner: ViewModelStoreOwner = ..., key: String? = ...): VM' is deprecated. Moved to package: androidx.hilt.lifecycle.viewmodel.compose.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/settings/ListenBrainzManager.kt:110:26 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/settings/ListenBrainzManager.kt:179:26 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/settings/PlayerSettings.kt:272:11 'when' is exhaustive so 'else' is redundant here.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/settings/PlayerSettings.kt:473:21 'when' is exhaustive so 'else' is redundant here.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/wrapped/WrappedScreen.kt:1111:39 Elvis operator (?:) always returns the left operand of non-nullable type 'String'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/wrapped/WrappedScreen.kt:1647:36 Elvis operator (?:) always returns the left operand of non-nullable type 'String'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/wrapped/WrappedShareHelper.kt:187:26 Redundant call of conversion method.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/wrapped/WrappedShareHelper.kt:301:28 Redundant call of conversion method.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/wrapped/WrappedShareHelper.kt:334:28 Redundant call of conversion method.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/screens/wrapped/WrappedShareHelper.kt:413:59 Elvis operator (?:) always returns the left operand of non-nullable type 'String'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/utils/ShowMediaInfo.kt:177:46 Redundant call of conversion method.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/utils/ShowMediaInfo.kt:183:41 Redundant call of conversion method.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/ui/utils/ShowMediaInfo.kt:197:68 Redundant call of conversion method.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/utils/AutomotiveArtwork.kt:141:64 'val id: Long' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/utils/ComposeToImage.kt:102:71 Redundant call of conversion method.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/utils/DataStoreCompose.kt:42:39 No cast needed.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/utils/DataStoreCompose.kt:82:35 Check for instance is always 'false'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/utils/DataStoreCompose.kt:82:69 No cast needed.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/utils/LocalFileDownloader.kt:95:22 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/utils/WebAuthSessionCleaner.kt:72:5 'fun clearFormData(): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/utils/WebAuthSessionCleaner.kt:74:5 'fun clearUsernamePassword(): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/utils/cipher/CipherWebView.kt:633:37 Unnecessary safe call on a non-null receiver of type 'FunctionNameExtractor.SigFunctionInfo'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/utils/cipher/CipherWebView.kt:634:39 Unnecessary safe call on a non-null receiver of type 'FunctionNameExtractor.SigFunctionInfo'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/utils/cipher/CipherWebView.kt:635:39 Unnecessary safe call on a non-null receiver of type 'FunctionNameExtractor.SigFunctionInfo'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/utils/cipher/CipherWebView.kt:673:37 Unnecessary safe call on a non-null receiver of type 'FunctionNameExtractor.NFunctionInfo'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/utils/cipher/PlayerConfigStore.kt:315:33 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/utils/cipher/PlayerJsFetcher.kt:227:22 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/utils/cipher/PlayerJsFetcher.kt:266:22 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/utils/potoken/PoTokenGenerator.kt:29:24 This is a delicate API and its use requires care. Make sure you fully read and understand documentation of the declaration that is marked as a delicate API.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/utils/potoken/PoTokenWebView.kt:309:63 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/viewmodels/ArtistViewModel.kt:152:39 Unnecessary safe call on a non-null receiver of type 'ArtistItem'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/viewmodels/BackupRestoreViewModel.kt:143:49 Java type mismatch: inferred type is 'String?', but 'String' was expected.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/viewmodels/CreateAiPlaylistViewModel.kt:186:42 No cast needed.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/widget/EchoMusicWidgetManager.kt:305:26 'fun notifyAppWidgetViewDataChanged(p0: Int, p1: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/widget/EchoMusicWidgetManager.kt:871:28 Redundant call of conversion method.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/widget/EchoMusicWidgetManager.kt:890:26 Redundant call of conversion method.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/widget/EchoMusicWidgetManager.kt:904:43 Redundant call of conversion method.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/widget/EchoMusicWidgetManager.kt:904:75 Redundant call of conversion method.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/widget/EchoMusicWidgetManager.kt:930:26 Redundant call of conversion method.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/com/music/echo/widget/EchoMusicWidgetManager.kt:1349:11 'fun setRemoteAdapter(p0: Int, p1: Intent!): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/echo/music/iad1tya/data/sources/module/ModuleManager.kt:81:45 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/echo/music/iad1tya/data/sources/module/ModuleManager.kt:137:26 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/echo/music/iad1tya/data/sources/module/QuickJsExecutor.kt:401:45 Unnecessary safe call on a non-null receiver of type 'ResponseBody'.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/echo/music/iad1tya/playback/audio/bluetooth/BluetoothAudioTracker.kt:161:44 'static fun getDefaultAdapter(): BluetoothAdapter!' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/echo/music/iad1tya/playback/audio/bluetooth/BluetoothAudioTracker.kt:186:34 'static fun getDefaultAdapter(): BluetoothAdapter!' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/echo/music/iad1tya/playback/audio/bluetooth/BluetoothAudioTracker.kt:297:29 'fun get(p0: String!): Any?' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/echo/music/iad1tya/playback/audio/bluetooth/BluetoothAudioTracker.kt:330:37 'val codecType: Int' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/echo/music/iad1tya/playback/smart/AudioDecoder.kt:160:36 'static field INFO_OUTPUT_BUFFERS_CHANGED: Int' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Echo-Music/Echo-Music/app/src/main/kotlin/echo/music/iad1tya/playback/smart/LoopMix.kt:337:27 Unnecessary non-null assertion (!!) on a non-null receiver of type 'Long'.
+
+> Task :app:compileUniversalGmsDebugJavaWithJavac
+> Task :app:hiltCollectClassesUniversalGmsDebug
+> Task :app:hiltAggregateDepsUniversalGmsDebug
+> Task :app:processUniversalGmsDebugJavaRes
+> Task :app:hiltJavaCompileUniversalGmsDebug
+> Task :app:transformUniversalGmsDebugClassesWithAsm
+> Task :app:mergeUniversalGmsDebugJavaResource
+> Task :app:dexBuilderUniversalGmsDebug
+> Task :app:mergeUniversalGmsDebugGlobalSynthetics
+> Task :app:mergeProjectDexUniversalGmsDebug
+> Task :app:packageUniversalGmsDebug
+> Task :app:createUniversalGmsDebugApkListingFileRedirect
+> Task :app:assembleUniversalGmsDebug
+
+[Incubating] Problems report is available at: file:///home/runner/work/Echo-Music/Echo-Music/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.8.2/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 3m 37s
+365 actionable tasks: 365 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.8.2/userguide/configuration_cache_enabling.html

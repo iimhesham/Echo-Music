@@ -1,0 +1,12 @@
+-rw-r--r-- 1 runner runner 207205097 Nov 17 10:48 app/build/outputs/apk/universalGms/debug/app-universal-gms-debug.apk
+package: name='echo.music.iad1tya.debug' versionCode='212' versionName='1.4.6' platformBuildVersionName='17' platformBuildVersionCode='37' compileSdkVersion='37' compileSdkVersionCodename='17'
+targetSdkVersion:'36'
+application-label:'Sandía'
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): false
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v3.2 scheme (APK Signature Scheme v3.2): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
