@@ -264,9 +264,15 @@ constructor(
         val usedExistingIds = HashSet<String>()
         val finalTracks =
           tracks.mapIndexedNotNull { index, track ->
-            matchedByIndex[index]?.metadata
-              ?: existingSongs.firstOrNull { existing ->
-                existing.song.song.id !in usedExistingIds &&
+            val directMatch = matchedByIndex[index]?.metadata
+            if (directMatch != null) {
+              usedExistingIds += directMatch.id
+              directMatch
+            } else {
+              var existingMatch = null as echo.music.iad1tya.db.entities.PlaylistSong?
+              for (existing in existingSongs) {
+                if (existing.song.song.id in usedExistingIds) continue
+                val score =
                   mapperMutex.withLock {
                     SpotifyMapper.matchScore(
                       spotifyTitle = track.name,
@@ -275,12 +281,18 @@ constructor(
                       candidateTitle = existing.song.song.title,
                       candidateArtist = existing.song.artists.joinToString(" ") { it.name },
                       candidateDurationSec = existing.song.song.duration,
-                    ) >= 0.80
+                    )
                   }
-              }?.let { existing ->
+                if (score >= 0.80) {
+                  existingMatch = existing
+                  break
+                }
+              }
+              existingMatch?.let { existing ->
                 usedExistingIds += existing.song.song.id
                 existing.song.toMediaMetadata()
               }
+            }
           }.distinctBy { it.id }
 
         // Re-imports reuse already-matched local tracks if a fresh YouTube search fails.
