@@ -229,6 +229,11 @@ constructor(
 
         val tracks = fetchAllTracks(source)
         if (tracks.isEmpty()) {
+          if (source.trackCount != 0) {
+            throw IllegalStateException(
+              "Spotify returned no usable tracks for ${source.title}. The existing local playlist was kept unchanged."
+            )
+          }
           mirrorPlaylist(source, emptyList())
           if (source is SpotifyImportSource.LikedSongs) recordLikedSongsSync()
           summaries +=
