@@ -18,4 +18,6 @@ data class SpotifyPaging<T>(
   val next: String? = null,
   val previous: String? = null,
   val href: String? = null,
+  /** Raw API entries before unavailable or malformed items are filtered. */
+  val rawItemCount: Int = items.size,
 )

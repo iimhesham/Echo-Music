@@ -833,23 +833,26 @@ object Spotify {
       response.obj("data")?.obj("playlistV2")?.obj("content")
         ?: throw SpotifyException(500, "No content in fetchPlaylist response")
 
+    val rawItems = content.arr("items") ?: JsonArray(emptyList())
     val tracks =
-      content.arr("items")?.mapNotNull { elem ->
-        val itemWrapper = elem.jsonObject.obj("itemV2") ?: return@mapNotNull null
+      rawItems.mapNotNull { elem ->
+        val item = runCatching { elem.jsonObject }.getOrNull() ?: return@mapNotNull null
+        val itemWrapper = item.obj("itemV2") ?: return@mapNotNull null
         val itemData = itemWrapper.obj("data") ?: return@mapNotNull null
         val wrapperUri = itemWrapper.str("_uri") ?: itemWrapper.str("uri")
-        val uid = elem.jsonObject.str("uid") ?: itemWrapper.str("uid")
+        val uid = item.str("uid") ?: itemWrapper.str("uid")
         SpotifyPlaylistTrack(
           track = parseGqlTrack(itemData, uriOverride = wrapperUri),
           uid = uid,
         )
-      } ?: emptyList()
+      }
 
     SpotifyPaging(
       items = tracks,
       total = content.int("totalCount") ?: 0,
       limit = limit,
       offset = offset,
+      rawItemCount = rawItems.size,
     )
   }
 
@@ -980,19 +983,22 @@ object Spotify {
       response.obj("data")?.obj("me")?.obj("library")?.obj("tracks")
         ?: throw SpotifyException(500, "Invalid fetchLibraryTracks response")
 
+    val rawItems = tracksData.arr("items") ?: JsonArray(emptyList())
     val savedTracks =
-      tracksData.arr("items")?.mapNotNull { elem ->
-        val trackWrapper = elem.jsonObject.obj("track") ?: return@mapNotNull null
+      rawItems.mapNotNull { elem ->
+        val item = runCatching { elem.jsonObject }.getOrNull() ?: return@mapNotNull null
+        val trackWrapper = item.obj("track") ?: return@mapNotNull null
         val trackData = trackWrapper.obj("data") ?: return@mapNotNull null
         val wrapperUri = trackWrapper.str("_uri") ?: trackWrapper.str("uri")
         SpotifySavedTrack(track = parseGqlTrack(trackData, uriOverride = wrapperUri))
-      } ?: emptyList()
+      }
 
     SpotifyPaging(
       items = savedTracks,
       total = tracksData.int("totalCount") ?: 0,
       limit = limit,
       offset = offset,
+      rawItemCount = rawItems.size,
     )
   }
 

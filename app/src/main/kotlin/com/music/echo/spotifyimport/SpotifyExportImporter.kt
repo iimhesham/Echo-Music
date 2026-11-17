@@ -5,9 +5,8 @@ import android.net.Uri
 import com.music.innertube.YouTube
 import com.music.innertube.models.SongItem
 import dagger.hilt.android.qualifiers.ApplicationContext
-import echo.music.iad1tya.db.MusicDatabase
+import echo.music.iad1tya.models.MediaMetadata
 import echo.music.iad1tya.models.toMediaMetadata
-import java.time.LocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
@@ -36,7 +35,7 @@ data class ImportResult(val total: Int, val imported: Int, val failed: List<Expo
 @Singleton
 class SpotifyExportImporter @Inject constructor(
   @ApplicationContext private val context: Context,
-  private val database: MusicDatabase,
+  private val spotifyImportRepository: SpotifyImportRepository,
 ) {
   private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
@@ -51,22 +50,32 @@ class SpotifyExportImporter @Inject constructor(
       val done = AtomicInteger(0)
       val gate = Semaphore(2) // gentle on YouTube: 2 searches at a time
       val failed = java.util.Collections.synchronizedList(mutableListOf<ExportTrack>())
-      var imported = 0
 
-      coroutineScope {
-        tracks.map { t ->
-          async {
-            gate.withPermit {
-              val ok = try { matchAndLike(t) } catch (e: CancellationException) { throw e } catch (e: Throwable) { false }
-              if (!ok) failed += t
-              onProgress(done.incrementAndGet(), tracks.size)
-              delay(150)
-              ok
+      val matched =
+        coroutineScope {
+          tracks.map { track ->
+            async {
+              gate.withPermit {
+                val metadata =
+                  try {
+                    matchTrack(track)
+                  } catch (error: CancellationException) {
+                    throw error
+                  } catch (_: Throwable) {
+                    null
+                  }
+                if (metadata == null) failed += track
+                onProgress(done.incrementAndGet(), tracks.size)
+                delay(150)
+                metadata
+              }
             }
-          }
-        }.awaitAll().forEach { if (it) imported++ }
-      }
-      ImportResult(tracks.size, imported, failed.toList())
+          }.awaitAll()
+        }
+
+      val importedTracks = matched.filterNotNull()
+      spotifyImportRepository.addExportMatchesToLikedSongs(importedTracks)
+      ImportResult(tracks.size, importedTracks.size, failed.toList())
     }
 
   /** Accepts either YourLibrary.json itself or the whole ZIP that Spotify emails you. */
@@ -85,22 +94,13 @@ class SpotifyExportImporter @Inject constructor(
     error("YourLibrary.json not found inside the ZIP")
   }
 
-  private suspend fun matchAndLike(t: ExportTrack): Boolean {
-    val candidates = YouTube.search("${t.track} ${t.artist}", YouTube.SearchFilter.FILTER_SONG)
-      .getOrNull()?.items?.filterIsInstance<SongItem>().orEmpty().take(5)
-    val best = candidates.maxByOrNull { score(t, it) } ?: return false
-    if (score(t, best) < MIN_SCORE) return false
-
-    val meta = best.toMediaMetadata()
-    database.withTransaction {
-      insert(meta)
-      // NOTE: don't use Song.toggleLike(): it also calls YouTube.likeVideo() on the logged-in account.
-      getSongById(meta.id)?.song?.let { s ->
-        val now = LocalDateTime.now()
-        update(s.copy(liked = true, likedDate = s.likedDate ?: now, inLibrary = s.inLibrary ?: now))
-      }
-    }
-    return true
+  private suspend fun matchTrack(t: ExportTrack): MediaMetadata? {
+    val candidates =
+      YouTube.search("${t.track} ${t.artist}", YouTube.SearchFilter.FILTER_SONG)
+        .getOrNull()?.items?.filterIsInstance<SongItem>().orEmpty().take(10)
+    val best = candidates.maxByOrNull { score(t, it) } ?: return null
+    if (score(t, best) < MIN_SCORE) return null
+    return best.toMediaMetadata()
   }
 
   private fun norm(s: String) =

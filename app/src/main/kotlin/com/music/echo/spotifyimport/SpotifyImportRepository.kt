@@ -368,6 +368,69 @@ constructor(
       if (source is SpotifyImportSource.LikedSongs) recordLikedSongsSync()
     }
 
+  /**
+   * Merge tracks recovered from Spotify's official data export into the local Liked Songs
+   * playlist. Existing songs are preserved and no YouTube account-like endpoint is called.
+   */
+  suspend fun addExportMatchesToLikedSongs(tracks: List<MediaMetadata>) =
+    withContext(Dispatchers.IO) {
+      if (tracks.isEmpty()) return@withContext
+
+      val playlistId = "SPOTIFY_LIKED_SONGS"
+      val existingSongs = database.playlistSongs(playlistId).first()
+      val merged = LinkedHashMap<String, MediaMetadata>()
+      existingSongs.forEach { playlistSong ->
+        merged[playlistSong.song.song.id] = playlistSong.song.toMediaMetadata()
+      }
+      tracks.forEach { metadata -> merged[metadata.id] = metadata }
+
+      val now = LocalDateTime.now()
+      database.withTransaction {
+        val existing = getPlaylistById(playlistId)
+        val entity =
+          existing?.playlist?.copy(
+            name = "Liked Songs",
+            bookmarkedAt = existing.playlist.bookmarkedAt ?: now,
+            lastUpdateTime = now,
+            isEditable = true,
+          )
+            ?: PlaylistEntity(
+              id = playlistId,
+              name = "Liked Songs",
+              bookmarkedAt = now,
+              lastUpdateTime = now,
+              isEditable = true,
+            )
+
+        if (existing == null) insert(entity) else update(entity)
+
+        merged.values.forEach { metadata ->
+          insert(metadata)
+          getSongById(metadata.id)?.song?.let { song ->
+            update(
+              song.copy(
+                liked = true,
+                likedDate = song.likedDate ?: now,
+                inLibrary = song.inLibrary ?: now,
+              )
+            )
+          }
+        }
+
+        clearPlaylist(playlistId)
+        merged.values.forEachIndexed { index, metadata ->
+          insert(
+            PlaylistSongMap(
+              playlistId = playlistId,
+              songId = metadata.id,
+              position = index,
+              setVideoId = metadata.setVideoId,
+            )
+          )
+        }
+      }
+    }
+
   private suspend fun ensureAuthenticated() {
     val prefs = context.dataStore.data.first()
     val token = prefs[SpotifyAccessTokenKey].orEmpty()
@@ -474,6 +537,7 @@ constructor(
     val tracks = ArrayList<SpotifyTrack>()
     var offset = 0
     var expectedTotal: Int? = null
+    var rawItemsFetched = 0
     val limit = 50
 
     while (true) {
@@ -486,20 +550,21 @@ constructor(
             SpotifyTrackPage(
               items = paging.items.map { it.track },
               total = paging.total,
+              rawItemCount = paging.rawItemCount,
             )
           }
           is SpotifyImportSource.Playlist -> {
             val paging = spotifyCallWithTokenRetry {
               Spotify.playlistTracks(
-                  playlistId = source.spotifyId,
-                  limit = limit,
-                  offset = offset,
-                )
-                .getOrThrow()
+                playlistId = source.spotifyId,
+                limit = limit,
+                offset = offset,
+              ).getOrThrow()
             }
             SpotifyTrackPage(
               items = paging.items.mapNotNull { it.track },
               total = paging.total,
+              rawItemCount = paging.rawItemCount,
             )
           }
         }
@@ -512,25 +577,29 @@ constructor(
         )
       }
 
-      if (page.items.isEmpty()) break
+      if (page.total <= 0) break
+      rawItemsFetched += page.rawItemCount
       tracks += page.items.filter { it.name.isNotBlank() }
-      offset += page.items.size
-      if (offset >= page.total || page.items.size < limit) break
+
+      // The offset addresses the requested window, not the filtered list of usable tracks.
+      // Advance by the requested page size so unavailable tracks cannot truncate pagination.
+      offset += limit
+      if (offset >= page.total) break
     }
 
     val expected = expectedTotal ?: 0
-    // Spotify's reported total also counts unavailable / removed / local tracks that it never
-    // returns, so a small gap is normal. Fail only when a real chunk of the library is missing.
-    val skipped = expected - tracks.size
-    if (skipped > maxOf(5, expected / 50)) {
+    if (expected > 0 && rawItemsFetched == 0) {
       throw IllegalStateException(
-        "Spotify returned an incomplete library page set: received ${tracks.size} of ${expected} tracks. The local playlist was not changed."
+        "Spotify returned no track entries. Please refresh the connection and try again."
       )
     }
 
+    val unavailable = (expected - tracks.size).coerceAtLeast(0)
+    timber.log.Timber.i(
+      "Spotify pagination complete: decoded ${tracks.size}/${expected} tracks; raw entries=${rawItemsFetched}; unavailable or malformed=${unavailable}"
+    )
     return tracks
   }
-
   /**
    * Extracts a Spotify playlist id from any of the forms a user might paste:
    * - a share URL: https://open.spotify.com/playlist/{id}?si=...
@@ -610,42 +679,54 @@ constructor(
     track: SpotifyTrack,
     index: Int,
   ): MatchedTrack? {
-    val searchResult =
-      YouTube.search(
-          query = SpotifyMapper.buildSearchQuery(track),
-          filter = YouTube.SearchFilter.FILTER_SONG,
-        )
-        .getOrElse { error ->
-          if (error is CancellationException) {
-            throw error
-          }
-          return null
+    val artistNames = track.artists.map { it.name }.filter { it.isNotBlank() }
+    val artistQuery = artistNames.joinToString(" ")
+    val queries =
+      buildList {
+        add(SpotifyMapper.buildSearchQuery(track))
+        if (artistQuery.isNotBlank()) add("${track.name} ${artistQuery}")
+        add(track.name)
+      }.map(String::trim).filter(String::isNotBlank).distinct()
+
+    val candidatesById = LinkedHashMap<String, SongItem>()
+    var best: Pair<SongItem, Double>? = null
+
+    for (query in queries) {
+      val searchResult =
+        YouTube.search(query = query, filter = YouTube.SearchFilter.FILTER_SONG)
+          .getOrElse { error ->
+            if (error is CancellationException) throw error
+            null
+          } ?: continue
+
+      searchResult.items.filterIsInstance<SongItem>().forEach { candidate ->
+        candidatesById.putIfAbsent(candidate.id, candidate)
+      }
+
+      best =
+        mapperMutex.withLock {
+          candidatesById.values
+            .map { candidate ->
+              candidate to
+                SpotifyMapper.matchScore(
+                  spotifyTitle = track.name,
+                  spotifyArtist = artistNames.joinToString(" "),
+                  spotifyDurationMs = track.durationMs,
+                  candidateTitle = candidate.title,
+                  candidateArtist = candidate.artists.joinToString(" ") { it.name },
+                  candidateDurationSec = candidate.duration,
+                )
+            }
+            .maxByOrNull { it.second }
         }
-    val candidates = searchResult.items.filterIsInstance<SongItem>().distinctBy { it.id }
 
-    val best =
-      mapperMutex.withLock {
-        candidates
-          .map { candidate ->
-            candidate to
-              SpotifyMapper.matchScore(
-                spotifyTitle = track.name,
-                spotifyArtist = track.artists.joinToString(" ") { it.name },
-                spotifyDurationMs = track.durationMs,
-                candidateTitle = candidate.title,
-                candidateArtist = candidate.artists.joinToString(" ") { it.name },
-                candidateDurationSec = candidate.duration,
-              )
-          }
-          .maxByOrNull { it.second }
-      } ?: return null
+      if (best?.second?.let { it >= 0.96 } == true) break
+    }
 
-    // Skip weak matches instead of silently saving a wrong song.
-    if (best.second < MIN_MATCH_SCORE) return null
-
-    return MatchedTrack(index = index, metadata = best.first.toMediaMetadata())
+    val match = best ?: return null
+    if (match.second < MIN_MATCH_SCORE) return null
+    return MatchedTrack(index = index, metadata = match.first.toMediaMetadata())
   }
-
   private suspend fun mirrorPlaylist(
     source: SpotifyImportSource,
     tracks: List<MediaMetadata>,
@@ -716,6 +797,7 @@ constructor(
   private data class SpotifyTrackPage(
     val items: List<SpotifyTrack>,
     val total: Int,
+    val rawItemCount: Int,
   )
 
   private data class MatchedTrack(
