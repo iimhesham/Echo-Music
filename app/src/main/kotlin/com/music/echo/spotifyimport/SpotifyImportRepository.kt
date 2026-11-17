@@ -687,6 +687,7 @@ constructor(
   ): List<MatchedTrack> = coroutineScope {
     val semaphore = Semaphore(MAX_CONCURRENT_MATCHES)
     val completed = AtomicInteger(0)
+    val matchedCount = AtomicInteger(0)
 
     tracks
       .mapIndexed { index, track ->
@@ -701,13 +702,20 @@ constructor(
                 reportException(error)
                 null
               }
+            if (matched != null) {
+              matchedCount.incrementAndGet()
+            } else {
+              timber.log.Timber.w(
+                "Spotify import: no YouTube Music match for '${track.name}' — ${track.artists.joinToString(" ") { it.name }}"
+              )
+            }
             val completedCount = completed.incrementAndGet()
             onProgress(
               SpotifyImportProgressUi(
                 sourceTitle = sourceTitle,
                 completedSources = sourceIndex,
                 totalSources = sourceCount,
-                matchedTracks = completedCount,
+                matchedTracks = matchedCount.get(),
                 totalTracks = tracks.size,
                 percent = progressPercent(sourceIndex, sourceCount, completedCount, tracks.size),
               ),
