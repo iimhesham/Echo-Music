@@ -506,15 +506,18 @@ constructor(
       context.dataStore.data.first()[SpotifyExportRecoveredTrackIdsKey].orEmpty()
     if (recoveredIds.isEmpty()) return matchedTracks
 
+    // Once the private Spotify API returns a recovered track again, it no longer needs
+    // the export-only preservation rule. This lets future unlikes sync normally.
+    val recoveredOnlyIds = recoveredIds - matchedTracks.map { it.id }.toSet()
     val merged = LinkedHashMap<String, MediaMetadata>()
     matchedTracks.forEach { merged[it.id] = it }
     existingSongs
-      .filter { it.song.song.id in recoveredIds }
+      .filter { it.song.song.id in recoveredOnlyIds }
       .forEach { existing ->
         merged.putIfAbsent(existing.song.song.id, existing.song.toMediaMetadata())
       }
 
-    val remainingRecoveredIds = recoveredIds.intersect(merged.keys)
+    val remainingRecoveredIds = recoveredOnlyIds.intersect(merged.keys)
     context.dataStore.edit { prefs ->
       prefs[SpotifyExportRecoveredTrackIdsKey] = remainingRecoveredIds
     }
