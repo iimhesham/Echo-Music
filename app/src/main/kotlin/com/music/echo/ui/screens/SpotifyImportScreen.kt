@@ -433,7 +433,10 @@ private fun SpotifyLoginSheet(
               mainWebView = this
               // Keep cookies for other services (especially YouTube Music) intact.
               // Spotify's login page can reuse its own existing session or prompt for sign-in.
-              loadUrl(echo.music.iad1tya.spotify.SpotifyAuth.LOGIN_URL)
+              loadUrl(
+                echo.music.iad1tya.spotify.SpotifyAuth.LOGIN_URL,
+                mapOf("Accept-Language" to "en-US,en;q=0.9"),
+              )
             }
           container.addView(
             spotifyWebView,
@@ -475,7 +478,8 @@ private fun WebView.configureSpotifyLoginWebView() {
     builtInZoomControls = true
     displayZoomControls = false
     mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
-    userAgentString = SpotifyLoginUserAgent
+    // Look like regular mobile Chrome (no "wv" marker); keeps UA consistent with client hints.
+    userAgentString = userAgentString.replace("; wv", "").replace(" Version/4.0", "")
   }
 }
 

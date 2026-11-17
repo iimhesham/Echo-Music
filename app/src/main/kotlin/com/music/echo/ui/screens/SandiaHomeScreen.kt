@@ -100,6 +100,9 @@ fun SandiaHomeScreen(navController: NavController) {
       TextButton(onClick = { navController.navigate("settings/spotify_import") }) {
         Text("Spotify")
       }
+      TextButton(onClick = { navController.navigate("settings/spotify_file_import") }) {
+        Text("File")
+      }
       TextButton(onClick = { checkOrInstall() }, enabled = !busy) {
         Text(if (pendingUpdate != null) "Install update" else "Update")
       }

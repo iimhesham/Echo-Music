@@ -197,7 +197,10 @@ android {
     checkDependencies = false
   }
 
-  androidResources { generateLocaleConfig = true }
+  androidResources {
+    generateLocaleConfig = true
+    localeFilters += listOf("en")
+  }
 
   packaging {
     jniLibs {
