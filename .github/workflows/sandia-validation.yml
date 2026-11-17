@@ -35,7 +35,7 @@ jobs:
       - name: Build Sandia APK
         run: |
           chmod +x gradlew
-          ./gradlew assembleUniversalGmsDebug -PappVersionCode=$((300 + GITHUB_RUN_NUMBER)) --stacktrace 2>&1 | tee build.log
+          ./gradlew assembleUniversalGmsSandia -PappVersionCode=$((300 + GITHUB_RUN_NUMBER)) --stacktrace 2>&1 | tee build.log
           exit ${PIPESTATUS[0]}
 
       - name: Upload build output
@@ -44,7 +44,7 @@ jobs:
         with:
           name: sandia-validation-apk
           path: |
-            app/build/outputs/apk/universalGms/debug/app-universal-gms-debug.apk
+            app/build/outputs/apk/universalGms/sandia/app-universal-gms-sandia.apk
             build.log
           if-no-files-found: warn
       - name: Publish APK for the in-app updater
@@ -53,7 +53,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="sandia-$((100 + GITHUB_RUN_NUMBER))"
-          cp app/build/outputs/apk/universalGms/debug/app-universal-gms-debug.apk "Sandia-$TAG.apk"
+          cp app/build/outputs/apk/universalGms/sandia/app-universal-gms-sandia.apk "Sandia-$TAG.apk"
           gh release create "$TAG" "Sandia-$TAG.apk" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \

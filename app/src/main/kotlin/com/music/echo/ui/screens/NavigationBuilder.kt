@@ -566,6 +566,17 @@ fun NavGraphBuilder.navigationBuilder(
 
   composable("sandia") { SandiaHomeScreen(navController) }
 
+  composable("sandia/search") { SandiaSearchScreen(navController) }
+
+  composable("sandia/player") { SandiaPlayerScreen(navController) }
+
+  composable(
+    route = "sandia/playlist/{id}",
+    arguments = listOf(navArgument("id") { type = NavType.StringType }),
+  ) { backStackEntry ->
+    SandiaPlaylistScreen(navController, backStackEntry.arguments?.getString("id").orEmpty())
+  }
+
   composable(route = "settings/integrations/listen_together") {
     ListenTogetherSettings(navController, scrollBehavior)
   }

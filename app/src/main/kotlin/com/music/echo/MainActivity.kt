@@ -1460,7 +1460,7 @@ class MainActivity : ComponentActivity() {
 
               if (
                 !showRail &&
-                  currentRoute != "sandia" &&
+                  currentRoute?.let { it.startsWith("sandia") || it.startsWith("settings/spotify") } != true &&
                   currentRoute != "update" &&
                   currentRoute != "listen_together/chat" &&
                   currentRoute != "ambient_mode" &&
@@ -1601,7 +1601,7 @@ class MainActivity : ComponentActivity() {
                 }
               } else {
                 if (
-                  currentRoute != "sandia" &&
+                  currentRoute?.let { it.startsWith("sandia") || it.startsWith("settings/spotify") } != true &&
                   currentRoute != "update" &&
                     currentRoute != "listen_together/chat" &&
                     currentRoute != "ambient_mode" &&

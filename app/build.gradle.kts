@@ -158,6 +158,14 @@ android {
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       buildConfigField("String", "ARCHITECTURE", "\"release\"")
     }
+    create("sandia") {
+      initWith(getByName("release"))
+      applicationIdSuffix = ".debug"
+      isDebuggable = false
+      signingConfig = signingConfigs.getByName("debug")
+      matchingFallbacks += listOf("release")
+      buildConfigField("String", "ARCHITECTURE", "\"release\"")
+    }
     debug {
       applicationIdSuffix = ".debug"
       isDebuggable = true
