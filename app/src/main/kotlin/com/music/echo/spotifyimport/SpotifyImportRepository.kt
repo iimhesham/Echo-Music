@@ -425,7 +425,7 @@ constructor(
       if (page.items.isEmpty()) break
       playlists += enrichPlaylistTrackCounts(page.items)
       offset += page.items.size
-      if (offset >= page.total || page.items.size < limit) break
+      if (offset >= page.total) break
     }
 
     return playlists
@@ -519,7 +519,10 @@ constructor(
     }
 
     val expected = expectedTotal ?: 0
-    if (tracks.size != expected) {
+    // Spotify's reported total also counts unavailable / removed / local tracks that it never
+    // returns, so a small gap is normal. Fail only when a real chunk of the library is missing.
+    val skipped = expected - tracks.size
+    if (skipped > maxOf(5, expected / 50)) {
       throw IllegalStateException(
         "Spotify returned an incomplete library page set: received ${tracks.size} of ${expected} tracks. The local playlist was not changed."
       )

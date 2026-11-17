@@ -409,8 +409,14 @@ class MainActivity : ComponentActivity() {
       val locale =
         dataStore[AppLanguageKey]
           ?.takeUnless { it == SYSTEM_DEFAULT }
-          ?.let { Locale.forLanguageTag(it) } ?: Locale.getDefault()
+          ?.let { Locale.forLanguageTag(it) } ?: Locale.ENGLISH
       setAppLocale(this, locale)
+    } else {
+      val localeManager = getSystemService(android.app.LocaleManager::class.java)
+      val current = localeManager.applicationLocales
+      if (current.isEmpty || current.get(0).language != "en") {
+        localeManager.applicationLocales = android.os.LocaleList.forLanguageTags("en")
+      }
     }
 
     if (java.io.File(filesDir, "clear_export_state").exists()) {
@@ -1115,7 +1121,7 @@ class MainActivity : ComponentActivity() {
         LaunchedEffect(Unit) {
           val prefs = context.dataStore.data.first()
           val lastOpened = prefs[echo.music.iad1tya.constants.LastOpenedVersionCodeKey] ?: -1
-          if (lastOpened < BuildConfig.VERSION_CODE) {
+          if (false && lastOpened < BuildConfig.VERSION_CODE) {
             showWelcomeDialog = true
           }
         }

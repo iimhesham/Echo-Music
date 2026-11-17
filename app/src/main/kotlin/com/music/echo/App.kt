@@ -325,7 +325,7 @@ class App : Application(), SingletonImageLoader.Factory, Configuration.Provider 
           val systemLocale = Locale.getDefault()
           val effectiveAppLocale =
             appLanguage?.takeUnless { it == SYSTEM_DEFAULT }?.let { Locale.forLanguageTag(it) }
-              ?: systemLocale
+              ?: Locale.ENGLISH
 
           YouTube.locale =
             YouTubeLocale(
