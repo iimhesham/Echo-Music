@@ -6,7 +6,7 @@ on:
       - sandia-build
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -47,3 +47,15 @@ jobs:
             app/build/outputs/apk/universalGms/debug/app-universal-gms-debug.apk
             build.log
           if-no-files-found: warn
+      - name: Publish APK for the in-app updater
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="sandia-$((100 + GITHUB_RUN_NUMBER))"
+          cp app/build/outputs/apk/universalGms/debug/app-universal-gms-debug.apk "Sandia-$TAG.apk"
+          gh release create "$TAG" "Sandia-$TAG.apk" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Sandía build $TAG" \
+            --notes "Automatically built Sandía APK from commit $GITHUB_SHA."
