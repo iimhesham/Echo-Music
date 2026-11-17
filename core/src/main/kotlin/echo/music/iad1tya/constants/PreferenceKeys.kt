@@ -18,6 +18,7 @@ val SpotifyAccountAvatarUrlKey = stringPreferencesKey("spotify_account_avatar_ur
 val SpotifyAccessTokenKey = stringPreferencesKey("spotify_access_token")
 val SpotifyAccessTokenExpiresAtKey = longPreferencesKey("spotify_access_token_expires_at")
 val SpotifyLikedSongsLastSyncKey = longPreferencesKey("spotify_liked_songs_last_sync")
+val SpotifyExportRecoveredTrackIdsKey = stringSetPreferencesKey("spotify_export_recovered_track_ids")
 val EnableDynamicIconKey = booleanPreferencesKey("enableDynamicIcon")
 val EnableLegacyIconKey = booleanPreferencesKey("enableLegacyIcon")
 val AppIconTypeKey = stringPreferencesKey("app_icon_type")

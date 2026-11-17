@@ -16,6 +16,7 @@ import echo.music.iad1tya.R
 import echo.music.iad1tya.constants.SpotifyAccessTokenExpiresAtKey
 import echo.music.iad1tya.constants.SpotifyAccessTokenKey
 import echo.music.iad1tya.constants.SpotifyLikedSongsLastSyncKey
+import echo.music.iad1tya.constants.SpotifyExportRecoveredTrackIdsKey
 import echo.music.iad1tya.constants.SpotifyAccountAvatarUrlKey
 import echo.music.iad1tya.constants.SpotifyAccountNameKey
 import echo.music.iad1tya.constants.SpotifySpDcKey
@@ -234,6 +235,9 @@ constructor(
               "Spotify returned no usable tracks for ${source.title}. The existing local playlist was kept unchanged."
             )
           }
+          if (source is SpotifyImportSource.LikedSongs) {
+            context.dataStore.edit { it.remove(SpotifyExportRecoveredTrackIdsKey) }
+          }
           mirrorPlaylist(source, emptyList())
           if (source is SpotifyImportSource.LikedSongs) recordLikedSongsSync()
           summaries +=
@@ -300,9 +304,11 @@ constructor(
             }
           }.distinctBy { it.id }
 
-        // Re-imports reuse already-matched local tracks if a fresh YouTube search fails.
-        // This prevents a partial API/search response from shrinking a working playlist.
-        mirrorPlaylist(source, finalTracks)
+        // Keep tracks recovered from the official Spotify export if the private API omits them.
+        // Existing recovered entries are retained only while they remain in the local playlist.
+        val playlistTracks =
+          preserveExportRecoveredTracks(source.localPlaylistId, finalTracks, existingSongs)
+        mirrorPlaylist(source, playlistTracks)
         val failedCount = (tracks.size - finalTracks.size).coerceAtLeast(0)
         if (
           source is SpotifyImportSource.LikedSongs &&
@@ -407,7 +413,14 @@ constructor(
         )
       }
 
-      mirrorPlaylist(source, finalTracks)
+      val playlistTracks =
+        if (source is SpotifyImportSource.LikedSongs && remoteTracks.isEmpty()) {
+          context.dataStore.edit { it.remove(SpotifyExportRecoveredTrackIdsKey) }
+          finalTracks
+        } else {
+          preserveExportRecoveredTracks(localPlaylistId, finalTracks, existingSongs)
+        }
+      mirrorPlaylist(source, playlistTracks)
       if (source is SpotifyImportSource.LikedSongs) recordLikedSongsSync()
     }
 
@@ -475,7 +488,38 @@ constructor(
           )
         }
       }
+
+      context.dataStore.edit { prefs ->
+        prefs[SpotifyExportRecoveredTrackIdsKey] =
+          prefs[SpotifyExportRecoveredTrackIdsKey].orEmpty() + tracks.map { it.id }
+      }
     }
+
+  private suspend fun preserveExportRecoveredTracks(
+    localPlaylistId: String,
+    matchedTracks: List<MediaMetadata>,
+    existingSongs: List<echo.music.iad1tya.db.entities.PlaylistSong>,
+  ): List<MediaMetadata> {
+    if (localPlaylistId != "SPOTIFY_LIKED_SONGS") return matchedTracks
+
+    val recoveredIds =
+      context.dataStore.data.first()[SpotifyExportRecoveredTrackIdsKey].orEmpty()
+    if (recoveredIds.isEmpty()) return matchedTracks
+
+    val merged = LinkedHashMap<String, MediaMetadata>()
+    matchedTracks.forEach { merged[it.id] = it }
+    existingSongs
+      .filter { it.song.song.id in recoveredIds }
+      .forEach { existing ->
+        merged.putIfAbsent(existing.song.song.id, existing.song.toMediaMetadata())
+      }
+
+    val remainingRecoveredIds = recoveredIds.intersect(merged.keys)
+    context.dataStore.edit { prefs ->
+      prefs[SpotifyExportRecoveredTrackIdsKey] = remainingRecoveredIds
+    }
+    return merged.values.toList()
+  }
 
   private suspend fun ensureAuthenticated() {
     val prefs = context.dataStore.data.first()
@@ -637,6 +681,11 @@ constructor(
     if (expected > 0 && rawItemsFetched == 0) {
       throw IllegalStateException(
         "Spotify returned no track entries. Please refresh the connection and try again."
+      )
+    }
+    if (expected > 0 && tracks.isEmpty()) {
+      throw IllegalStateException(
+        "Spotify returned no usable tracks. The existing local playlist was kept unchanged."
       )
     }
 
