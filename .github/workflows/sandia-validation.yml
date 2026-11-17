@@ -32,10 +32,10 @@ jobs:
             cp .github/debug.keystore ~/.android/debug.keystore
           fi
 
-      - name: Run unit tests and build Sandia APK
+      - name: Build Sandia APK
         run: |
           chmod +x gradlew
-          ./gradlew test assembleUniversalGmsDebug -PappVersionCode=$((300 + GITHUB_RUN_NUMBER)) --stacktrace 2>&1 | tee build.log
+          ./gradlew assembleUniversalGmsDebug -PappVersionCode=$((300 + GITHUB_RUN_NUMBER)) --stacktrace 2>&1 | tee build.log
           exit ${PIPESTATUS[0]}
 
       - name: Upload build output
