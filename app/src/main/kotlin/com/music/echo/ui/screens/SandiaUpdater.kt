@@ -71,8 +71,8 @@ object SandiaUpdater {
       dir.listFiles()?.filter { it != file }?.forEach { it.delete() }
       val conn =
         (URL(update.apkUrl).openConnection() as HttpURLConnection).apply {
-          connectTimeout = 15_000
-          readTimeout = 30_000
+          connectTimeout = 30_000
+          readTimeout = 60_000
           instanceFollowRedirects = true
         }
       try {

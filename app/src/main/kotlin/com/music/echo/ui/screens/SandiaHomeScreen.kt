@@ -89,7 +89,13 @@ fun SandiaHomeScreen(navController: NavController) {
       } catch (e: CancellationException) {
         throw e
       } catch (e: Throwable) {
-        updateText = "Update failed: ${e.message}"
+        updateText = "Download failed. Opening your browser instead..."
+        pending?.let {
+          context.startActivity(
+            android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(it.apkUrl))
+              .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+          )
+        }
       } finally {
         busy = false
       }
